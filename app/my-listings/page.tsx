@@ -6,16 +6,16 @@ import { useSession, signIn } from 'next-auth/react';
 import { Header } from '@/components/Header';
 import { PropertyCard } from '@/components/PropertyCard';
 import { Property } from '@/lib/mock-data';
-import { Loader2, AlertCircle, Home, Trash2 } from 'lucide-react'; // Added Trash2 icon
+import { Loader2, AlertCircle, Home, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 // Animation variants
-const containerVariants = { /* ... as before ... */
+const containerVariants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
-const itemVariant = { /* Optional for individual card animations if needed */
+const itemVariant = {
   hidden: { y: 20, opacity: 0 },
   visible: { y: 0, opacity: 1 },
 };
@@ -25,48 +25,51 @@ export default function MyListingsPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null); // Track which item is being deleted
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // --- Fetch Listings Effect (remains the same) ---
   useEffect(() => {
     if (status === 'authenticated') {
-      // ... fetchMyListings logic ...
-         const fetchMyListings = async () => {
-         setIsLoading(true);
-         setError(null);
-         try {
-           const response = await fetch('/api/my-listings');
-           if (!response.ok) {
-             const errorData = await response.json();
-             throw new Error(errorData.error || `Failed to fetch listings: ${response.statusText}`);
-           }
-           const data = await response.json();
-           setProperties(data.properties || []);
-         } catch (err) {
-           console.error("Error fetching my listings:", err);
-           setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-           setProperties([]);
-         } finally {
-           setIsLoading(false);
-         }
-       };
-       fetchMyListings();
+      const fetchMyListings = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+          // --- USE THE RENAMED API ROUTE ---
+          const response = await fetch('/api/listings/my'); // Corrected URL
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Failed to fetch listings: ${response.statusText}`);
+          }
+          const data = await response.json();
+          // Make sure _id is stringified if needed by PropertyCard
+          const formattedProperties = data.properties.map((p: any) => ({
+              ...p,
+              _id: p._id?.toString() // Ensure _id is a string
+          }));
+          setProperties(formattedProperties || []);
+        } catch (err) {
+          console.error("Error fetching my listings:", err);
+          setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+          setProperties([]);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchMyListings();
     } else if (status === 'unauthenticated') {
       setIsLoading(false);
       setProperties([]);
     }
   }, [status]);
 
-  // --- NEW: Handle Delete Function ---
   const handleDelete = async (propertyId: string | undefined) => {
     if (!propertyId) return;
 
-    // Confirmation dialog
     if (!window.confirm('Are you sure you want to permanently delete this listing?')) {
       return;
     }
 
-    setDeletingId(propertyId); // Show loading state on the button
+    setDeletingId(propertyId);
     setError(null);
 
     try {
@@ -75,9 +78,7 @@ export default function MyListingsPage() {
       });
 
       if (response.ok) {
-        // Remove the deleted property from the state
         setProperties(prev => prev.filter(p => p._id !== propertyId));
-        // Optionally show a success toast/message here
       } else {
         const errorData = await response.json();
         setError(errorData.error || `Error ${response.status}: Failed to delete property.`);
@@ -87,14 +88,14 @@ export default function MyListingsPage() {
       console.error("Delete Fetch Error:", err);
       setError('An unexpected network error occurred during deletion.');
     } finally {
-      setDeletingId(null); // Stop loading state
+      setDeletingId(null);
     }
   };
 
 
-  // --- Loading State UI (remains the same) ---
+  // --- Loading State UI ---
   if (status === 'loading' || (status === 'authenticated' && isLoading)) {
-     return ( /* ... loading UI ... */
+     return (
        <div className="bg-gray-50 min-h-screen">
          <Header />
          <div className="flex justify-center items-center min-h-[calc(100vh-80px)]">
@@ -104,9 +105,9 @@ export default function MyListingsPage() {
      );
   }
 
-  // --- Unauthenticated State UI (remains the same) ---
+  // --- Unauthenticated State UI ---
   if (status === 'unauthenticated') {
-    return ( /* ... sign in prompt UI ... */
+    return (
        <div className="bg-gray-50 min-h-screen">
           <Header />
           <div className="container mx-auto px-6 py-20 flex flex-col items-center text-center">
@@ -129,7 +130,7 @@ export default function MyListingsPage() {
     <div className="bg-gray-50 min-h-screen">
       <Header />
       <main className="container mx-auto px-6 py-12">
-        <motion.div /* ... animation props ... */
+        <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -141,13 +142,13 @@ export default function MyListingsPage() {
             </Link>
           </div>
 
-          {error && ( /* ... error display ... */
+          {error && (
             <div className="bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
               <AlertCircle className="w-5 h-5"/> Error: {error}
             </div>
            )}
 
-          {!isLoading && properties.length === 0 && !error && ( /* ... no listings UI ... */
+          {!isLoading && properties.length === 0 && !error && (
              <div className="text-center py-16 px-6 bg-white rounded-lg shadow-md border border-gray-200">
                 <Home className="w-16 h-16 text-gray-400 mx-auto mb-4"/>
                <h2 className="text-xl font-semibold text-gray-700 mb-2">No Listings Yet</h2>
@@ -158,7 +159,6 @@ export default function MyListingsPage() {
              </div>
           )}
 
-          {/* Render Property Cards with Delete Button */}
           {properties.length > 0 && (
             <motion.div
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
@@ -167,22 +167,24 @@ export default function MyListingsPage() {
               animate="visible"
             >
               {properties.map((property) => (
-                <motion.div key={property._id} variants={itemVariant} className="relative"> {/* Added key and variant */}
-                  <PropertyCard property={property} />
-                  {/* Delete Button Overlay */}
-                  <button
-                    onClick={() => handleDelete(property._id)}
-                    disabled={deletingId === property._id} // Disable while deleting this specific item
-                    className={`absolute top-2 left-2 bg-red-600/80 hover:bg-red-700 text-white p-2 rounded-full shadow-md transition duration-200 ${deletingId === property._id ? 'opacity-50 cursor-not-allowed' : 'opacity-90 hover:opacity-100'}`}
-                    title="Delete Listing"
-                  >
-                    {deletingId === property._id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </button>
-                </motion.div>
+                // Ensure property._id exists before rendering
+                property._id ? (
+                  <motion.div key={property._id} variants={itemVariant} className="relative">
+                    <PropertyCard property={property} />
+                    <button
+                      onClick={() => handleDelete(property._id)}
+                      disabled={deletingId === property._id}
+                      className={`absolute top-2 left-2 bg-red-600/80 hover:bg-red-700 text-white p-2 rounded-full shadow-md transition duration-200 ${deletingId === property._id ? 'opacity-50 cursor-not-allowed' : 'opacity-90 hover:opacity-100'}`}
+                      title="Delete Listing"
+                    >
+                      {deletingId === property._id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
+                  </motion.div>
+                ) : null // Don't render card if _id is missing
               ))}
             </motion.div>
           )}
