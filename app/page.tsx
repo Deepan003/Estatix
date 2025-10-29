@@ -1,39 +1,19 @@
-'use client';
+// app/page.tsx
+"use client"; // <-- Try changing to double quotes
 
 import { motion } from 'framer-motion';
-import { MapPin, Search, Leaf, ShieldCheck, Cpu } from 'lucide-react';
+import { Leaf, ShieldCheck, Cpu } from 'lucide-react'; // Corrected import based on file content
 import Link from 'next/link';
+import { Header } from '@/components/Header'; // Make sure this import is here
 
-// Reusable Header Component for consistent navigation
-const Header = () => (
-  <motion.header
-    initial={{ y: -100, opacity: 0 }}
-    animate={{ y: 0, opacity: 1 }}
-    transition={{ duration: 0.5 }}
-    className="w-full bg-white/80 backdrop-blur-sm shadow-md sticky top-0 z-50"
-  >
-    <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
-      <Link href="/" className="text-2xl font-bold text-emerald-800">EstatiX</Link>
-      <div className="hidden md:flex items-center space-x-6 text-gray-700">
-        <Link href="/properties" className="hover:text-emerald-600 transition-colors">Buy</Link>
-        <a href="#" className="hover:text-emerald-600 transition-colors">Sell</a>
-        <a href="#" className="hover:text-emerald-600 transition-colors">About</a>
-      </div>
-      <div className="flex items-center space-x-4">
-        <a href="#" className="bg-emerald-600 text-white px-5 py-2 rounded-lg hover:bg-emerald-700 transition-all font-medium">
-          Sign Up
-        </a>
-      </div>
-    </nav>
-  </motion.header>
-);
+// REMOVE any old Header definition if it was still here
 
 export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 text-gray-800">
       <Header />
       <main className="flex-grow">
-        {/* Hero Section with background image and glass effect */}
+        {/* Hero Section */}
         <section
           className="relative h-[70vh] flex items-center justify-center text-white bg-cover bg-center"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2670&auto=format&fit=crop')" }}
@@ -83,6 +63,10 @@ export default function HomePage() {
           </div>
         </section>
       </main>
+       {/* Simple Footer */}
+       <footer className="text-center py-4 text-gray-500 text-sm border-t border-gray-200 mt-12">
+         © {new Date().getFullYear()} EstatiX. All rights reserved.
+       </footer>
     </div>
   );
 }
